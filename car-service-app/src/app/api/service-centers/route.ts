@@ -131,7 +131,7 @@ export async function GET(req: NextRequest) {
     }
 
     const centers = await findNearbyShops(coords.lat, coords.lon);
-    return NextResponse.json({ centers });
+    return NextResponse.json({ centers, center: coords });
   } catch (err) {
     console.error("GET /api/service-centers failed:", err);
     return NextResponse.json(
