@@ -264,3 +264,267 @@ button:disabled {
   color: var(--muted);
   font-size: 0.9rem;
 }
+
+/* ---------- Tabs, chips, toolbar ---------- */
+.tab-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.tab-btn {
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  padding: 7px 12px;
+  font-size: 0.85rem;
+}
+
+.tab-btn:hover {
+  background: var(--border);
+}
+
+.tab-btn.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+.recent-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+
+.chip {
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.chip:hover {
+  background: var(--border);
+}
+
+.link-btn {
+  background: none;
+  color: var(--muted);
+  font-weight: 500;
+  font-size: 0.85rem;
+  text-decoration: underline;
+  margin-left: 10px;
+  padding: 10px 4px;
+}
+
+.link-btn:hover {
+  background: none;
+  color: var(--text);
+}
+
+.card-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.card-head h2 {
+  margin: 0;
+}
+
+.toolbar {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+button.secondary {
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  padding: 6px 12px;
+  font-size: 0.85rem;
+}
+
+button.secondary:hover {
+  background: var(--border);
+}
+
+.seg {
+  display: inline-flex;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.seg button {
+  background: var(--bg);
+  color: var(--text);
+  border-radius: 0;
+  padding: 6px 12px;
+  font-size: 0.85rem;
+}
+
+.seg button.active {
+  background: var(--accent);
+  color: #fff;
+}
+
+.banner-sub {
+  font-weight: 400;
+  font-size: 0.85rem;
+  margin-top: 6px;
+  color: var(--muted);
+}
+
+.annual-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.annual-row label {
+  margin: 0;
+}
+
+.annual-row input {
+  width: 110px;
+}
+
+/* ---------- NHTSA info blocks ---------- */
+.info-block {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin: 8px 0;
+}
+
+.info-block p {
+  margin: 6px 0;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.info-title {
+  font-weight: 600;
+}
+
+.tag {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  background: var(--border);
+}
+
+.tag.danger {
+  background: var(--due);
+  color: #fff;
+}
+
+.rating-table {
+  border-collapse: collapse;
+  margin: 6px 0;
+}
+
+.rating-table th {
+  text-align: left;
+  font-weight: 500;
+  color: var(--muted);
+  padding: 2px 16px 2px 0;
+  font-size: 0.9rem;
+}
+
+.stars {
+  color: #f59e0b;
+  letter-spacing: 1px;
+}
+
+.stars-off {
+  color: var(--border);
+}
+
+.plain-list {
+  margin: 4px 0;
+  padding-left: 20px;
+  font-size: 0.9rem;
+}
+
+.center-item {
+  cursor: pointer;
+}
+
+.center-item:hover {
+  background: var(--bg);
+}
+
+.dot {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  margin-right: 7px;
+}
+
+.print-only {
+  display: none;
+}
+
+/* ---------- Print: only the schedule card ---------- */
+@media print {
+  /* Force a light palette even when the OS is in dark mode. */
+  :root:root:root {
+    --bg: #fff;
+    --card: #fff;
+    --text: #000;
+    --muted: #444;
+    --border: #bbb;
+    --due: #b91c1c;
+    --due-bg: #fff;
+    --upcoming: #92400e;
+    --upcoming-bg: #fff;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  body.print-schedule .container > *:not(.print-target) {
+    display: none !important;
+  }
+
+  body.print-schedule .print-target {
+    border: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  body.print-schedule .print-only {
+    display: block;
+  }
+
+  .print-header h1 {
+    font-size: 1.4rem;
+    margin: 0 0 4px;
+  }
+
+  .schedule-item {
+    break-inside: avoid;
+  }
+
+  .next-due-banner {
+    border-width: 2px;
+  }
+}
