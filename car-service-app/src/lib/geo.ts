@@ -3,7 +3,7 @@
 // an identifying User-Agent.
 
 export const USER_AGENT =
-  "car-service-reminder-app/1.0 (contact: set-your-email-here)";
+  "car-service-reminder-app/1.0 (contact: bharadwaj.ravipati@outlook.com)";
 
 const NOMINATIM_URL = "https://nominatim.openstreetmap.org/search";
 
