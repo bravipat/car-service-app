@@ -65,15 +65,35 @@ export default function AskQuestion() {
   }
 
   return (
-    <div className="card">
-      <h2>Ask a question</h2>
-      <p className="muted-note" style={{ marginBottom: 12 }}>
-        About vehicles and driving. Answers come from the driving-safety guides loaded into this app
-        first, then from the web, and each answer says which.
+    <section className="ask" aria-labelledby="ask-title">
+      <h2 id="ask-title">Ask about your car or driving</h2>
+      <p className="s">
+        Answers come from the driving-safety guides first, then the web. Each one shows its source.
       </p>
 
+      <form
+        className="askrow"
+        onSubmit={(e) => {
+          e.preventDefault();
+          ask(input);
+        }}
+      >
+        <input
+          type="text"
+          className="askin"
+          placeholder="e.g. How does alcohol affect my vision while driving?"
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          disabled={loading}
+          aria-label="Your question"
+        />
+        <button type="submit" className="btn" disabled={loading || !input.trim()}>
+          Ask
+        </button>
+      </form>
+
       {messages.length === 0 && (
-        <div className="example-row">
+        <div className="chips">
           {EXAMPLES.map((q) => (
             <button type="button" key={q} className="chip" onClick={() => ask(q)} disabled={loading}>
               {q}
@@ -113,26 +133,6 @@ export default function AskQuestion() {
           {loading && <div className="chat-bubble assistant spinner-text">Checking the guides…</div>}
         </div>
       )}
-
-      <form
-        className="chat-input-row"
-        onSubmit={(e) => {
-          e.preventDefault();
-          ask(input);
-        }}
-      >
-        <input
-          type="text"
-          placeholder="e.g. Why does my steering feel loose?"
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          disabled={loading}
-          aria-label="Your question"
-        />
-        <button type="submit" disabled={loading || !input.trim()}>
-          Ask
-        </button>
-      </form>
-    </div>
+    </section>
   );
 }

@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import VehicleForm, { VehicleFormValues } from "@/components/VehicleForm";
-import VehicleBar from "@/components/VehicleBar";
+import VehicleDash, { Odometer } from "@/components/VehicleDash";
 import ServiceChecklist from "@/components/ServiceChecklist";
 import ServiceCenters from "@/components/ServiceCenters";
 import VehicleSafety from "@/components/VehicleSafety";
@@ -27,13 +27,12 @@ type ScheduleResponse = {
   schedule: ScheduleResult[];
 };
 
-type TabId = "schedule" | "safety" | "nearby" | "ask";
+type TabId = "schedule" | "safety" | "nearby";
 
-const TABS: { id: TabId; label: string; needsVehicle: boolean }[] = [
-  { id: "schedule", label: "Maintenance", needsVehicle: true },
-  { id: "safety", label: "Safety & recalls", needsVehicle: true },
-  { id: "nearby", label: "Nearby help", needsVehicle: true },
-  { id: "ask", label: "Ask a question", needsVehicle: false },
+const TABS: { id: TabId; label: string }[] = [
+  { id: "schedule", label: "Maintenance" },
+  { id: "safety", label: "Safety & recalls" },
+  { id: "nearby", label: "Nearby help" },
 ];
 
 export default function HomePage() {
@@ -43,9 +42,9 @@ export default function HomePage() {
   const [vehicle, setVehicle] = useState<VehicleFormValues | null>(null);
   const [editing, setEditing] = useState(false);
 
-  const [tab, setTab] = useState<TabId>("ask");
+  const [tab, setTab] = useState<TabId>("schedule");
   // Tabs that do network work (NHTSA, map) only mount once they've been opened.
-  const [visited, setVisited] = useState<Partial<Record<TabId, boolean>>>({ ask: true });
+  const [visited, setVisited] = useState<Partial<Record<TabId, boolean>>>({ schedule: true });
 
   const [saved, setSaved] = useState<SavedVehicle | null>(null);
   const [recent, setRecent] = useState<SavedVehicle[]>([]);
@@ -93,7 +92,7 @@ export default function HomePage() {
       setVehicle(values);
       setEditing(false);
       setTab("schedule");
-      setVisited({ schedule: true, ask: true }); // safety + nearby start fresh for the new vehicle
+      setVisited({ schedule: true }); // safety + nearby start fresh for the new vehicle
       window.scrollTo({ top: 0, behavior: "smooth" });
 
       // Remember it locally (instant prefill next visit) and in the database.
@@ -115,17 +114,37 @@ export default function HomePage() {
   const showForm = !hasVehicle || editing;
   const vehicleKey = vehicle ? `${vehicle.year}|${vehicle.makeName}|${vehicle.modelName}|${vehicle.zip}` : "";
 
+  const dueCount = result ? result.schedule.filter((e) => e.status === "due").length : 0;
+  const upcomingCount = result ? result.schedule.length - dueCount : 0;
+
   return (
     <main className="container">
-      <header className="site-header">
-        <h1>Car Service Reminder</h1>
-        <p className="subtitle">
-          See what maintenance is due, check safety ratings and recalls for your car, and find help nearby.
-        </p>
-      </header>
+      <div className="topbar">
+        <span className="mark" aria-hidden="true">
+          <i />
+        </span>
+        <span className="brand">Car Service Reminder</span>
+      </div>
+
+      {!hasVehicle && (
+        <header className="hero">
+          <div className="hero-grid">
+            <div>
+              <h1>What does your car need next?</h1>
+              <p>
+                Enter your car and mileage to see what maintenance is due, check safety ratings and recalls, and
+                find help nearby.
+              </p>
+            </div>
+            <div className="hero-odo">
+              <Odometer value={0} caption="Your mileage goes here" />
+            </div>
+          </div>
+        </header>
+      )}
 
       {showForm && (
-        <section className="card form-card" ref={formRef}>
+        <section className={`card form-card ${hasVehicle ? "" : "overlap"}`} ref={formRef}>
           <h2>{hasVehicle ? "Change vehicle" : "Your vehicle"}</h2>
           <VehicleForm
             onSubmit={handleSubmit}
@@ -146,23 +165,27 @@ export default function HomePage() {
         </section>
       )}
 
-      <div className="sticky-head">
-        {hasVehicle && !editing && vehicle && (
-          <VehicleBar
-            label={vehicleLabel(vehicle)}
-            mileage={vehicle.mileage}
-            zip={vehicle.zip}
-            lastServiceDate={vehicle.lastServiceDate}
-            onEdit={() => {
-              setEditing(true);
-              setTimeout(() => formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 0);
-            }}
-          />
-        )}
-        <nav className="tab-nav" role="tablist" aria-label="Sections">
-          {TABS.map((t) => {
-            const disabled = t.needsVehicle && !hasVehicle;
-            return (
+      {hasVehicle && !editing && vehicle && (
+        <VehicleDash
+          label={vehicleLabel(vehicle)}
+          mileage={vehicle.mileage}
+          zip={vehicle.zip}
+          lastServiceDate={vehicle.lastServiceDate}
+          dueCount={dueCount}
+          upcomingCount={upcomingCount}
+          onEdit={() => {
+            setEditing(true);
+            setTimeout(() => formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 0);
+          }}
+        />
+      )}
+
+      <AskQuestion />
+
+      {hasVehicle && vehicle && result && (
+        <div className="sheet">
+          <nav className="tab-nav" role="tablist" aria-label="Sections">
+            {TABS.map((t) => (
               <button
                 key={t.id}
                 role="tab"
@@ -170,27 +193,14 @@ export default function HomePage() {
                 id={`tab-${t.id}`}
                 aria-selected={tab === t.id}
                 aria-controls={`panel-${t.id}`}
-                disabled={disabled}
-                title={disabled ? "Enter your vehicle first" : undefined}
                 className={`nav-tab ${tab === t.id ? "active" : ""}`}
                 onClick={() => openTab(t.id)}
               >
                 {t.label}
               </button>
-            );
-          })}
-        </nav>
-      </div>
+            ))}
+          </nav>
 
-      {!hasVehicle && tab === "ask" && (
-        <p className="muted-note hint">
-          Enter your vehicle above to unlock your maintenance schedule, safety and recall information, and nearby
-          help. You can ask driving and car questions right away.
-        </p>
-      )}
-
-      {hasVehicle && vehicle && result && (
-        <>
           <section id="panel-schedule" role="tabpanel" aria-labelledby="tab-schedule" className="tab-panel" hidden={tab !== "schedule"}>
             {visited.schedule && (
               <ServiceChecklist
@@ -214,12 +224,8 @@ export default function HomePage() {
           <section id="panel-nearby" role="tabpanel" aria-labelledby="tab-nearby" className="tab-panel" hidden={tab !== "nearby"}>
             {visited.nearby && <ServiceCenters key={vehicleKey} zip={vehicle.zip} visible={tab === "nearby"} />}
           </section>
-        </>
+        </div>
       )}
-
-      <section id="panel-ask" role="tabpanel" aria-labelledby="tab-ask" className="tab-panel" hidden={tab !== "ask"}>
-        <AskQuestion />
-      </section>
     </main>
   );
 }
