@@ -36,6 +36,23 @@ CREATE TABLE IF NOT EXISTS nhtsa_mfr_comms (
 );
 CREATE INDEX IF NOT EXISTS nhtsa_mfr_comms_vehicle_idx
   ON nhtsa_mfr_comms (UPPER(make), UPPER(model), model_year);
+
+-- Reference documents for the "Ask me a question" box, split into chunks by
+-- scripts/build-knowledge.py and loaded by scripts/load-knowledge.mjs.
+CREATE TABLE IF NOT EXISTS kb_chunks (
+  id           BIGSERIAL PRIMARY KEY,
+  doc_id       TEXT NOT NULL,
+  doc_title    TEXT NOT NULL,
+  source_url   TEXT,
+  section_path TEXT NOT NULL,
+  page_start   INTEGER,
+  page_end     INTEGER,
+  chunk_index  INTEGER NOT NULL,
+  content      TEXT NOT NULL,
+  tsv          tsvector GENERATED ALWAYS AS (to_tsvector('english', section_path || ' ' || content)) STORED,
+  UNIQUE (doc_id, chunk_index)
+);
+CREATE INDEX IF NOT EXISTS kb_chunks_tsv_idx ON kb_chunks USING GIN (tsv);
 `;
 
 let ready: Promise<void> | null = null;

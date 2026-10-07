@@ -3,6 +3,25 @@ import { getPool } from "@/lib/db";
 import { ensureSchema } from "@/lib/schema";
 import { parseVehicle, norm } from "@/lib/nhtsa";
 
+// "CLA-Class" -> "CLA", "3 Series" -> "3". NHTSA files list variants such as
+// "CLA 250" or "330i", so we match model names that START with this base.
+function modelBase(model: string): string {
+  const base = model
+    .toUpperCase()
+    .replace(/[\s-]*(CLASS|SERIES|SEDAN|COUPE|WAGON|HATCHBACK)$/, "")
+    .trim();
+  return base || model.toUpperCase().trim();
+}
+
+// Regex source (Postgres ARE) for: base, then end/space/digit/punctuation — not another letter,
+// so "CLA" matches "CLA 250" and "CLA250" but not "CLASSIC", and "E" matches "E 350" but not "EQS".
+function baseRegex(model: string): string {
+  const esc = modelBase(model)
+    .replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+    .replace(/[\s-]+/g, "[ -]?");
+  return `^${esc}([^A-Z]|$)`;
+}
+
 // Manufacturer communications (technical service bulletins). NHTSA publishes
 // these only as bulk flat files, not an API, so they are loaded into our own
 // table by scripts/load-mfr-comms.mjs and queried from there.
@@ -27,10 +46,11 @@ export async function GET(req: NextRequest) {
         WHERE model_year = $1
           AND regexp_replace(UPPER(make), '[^A-Z0-9]', '', 'g') = $2
           AND ( regexp_replace(UPPER(model), '[^A-Z0-9]', '', 'g') LIKE '%' || $3 || '%'
-             OR $3 LIKE '%' || regexp_replace(UPPER(model), '[^A-Z0-9]', '', 'g') || '%' )
+             OR $3 LIKE '%' || regexp_replace(UPPER(model), '[^A-Z0-9]', '', 'g') || '%'
+             OR UPPER(model) ~ $4 )
         ORDER BY bulletin_date DESC NULLS LAST
         LIMIT 50`,
-      [v.year, norm(v.make), norm(v.model)]
+      [v.year, norm(v.make), norm(v.model), baseRegex(v.model)]
     );
 
     return NextResponse.json({

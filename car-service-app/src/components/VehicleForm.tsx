@@ -43,6 +43,15 @@ export default function VehicleForm({
 
   const restored = useRef(false);
 
+  // Latest allowed "last service" date: today in the visitor's own timezone
+  // (not UTC, which can already be "tomorrow" in the evening in the US).
+  const [today, setToday] = useState("");
+  useEffect(() => {
+    const d = new Date();
+    const pad = (n: number) => String(n).padStart(2, "0");
+    setToday(`${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`);
+  }, []);
+
   async function loadModels(id: string): Promise<Option[]> {
     const r = await fetch(`/api/models?makeId=${id}`);
     return r.ok ? r.json() : [];
@@ -182,6 +191,7 @@ export default function VehicleForm({
           <input
             id="lastServiceDate"
             type="date"
+            max={today || undefined}
             value={lastServiceDate}
             onChange={(e) => setLastServiceDate(e.target.value)}
           />

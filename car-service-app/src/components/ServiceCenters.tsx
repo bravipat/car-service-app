@@ -73,7 +73,7 @@ async function getJson(url: string): Promise<any> {
   return body;
 }
 
-export default function ServiceCenters({ zip }: { zip: string }) {
+export default function ServiceCenters({ zip, visible = true }: { zip: string; visible?: boolean }) {
   const [tab, setTab] = useState<Tab>("shops");
   const [data, setData] = useState<Partial<Record<Tab, Loaded>>>({});
   const [loading, setLoading] = useState(true);
@@ -85,6 +85,7 @@ export default function ServiceCenters({ zip }: { zip: string }) {
   const mapRef = useRef<mapboxgl.Map | null>(null);
   const markersRef = useRef<mapboxgl.Marker[]>([]);
   const homeRef = useRef<mapboxgl.Marker | null>(null);
+  const boundsRef = useRef<mapboxgl.LngLatBounds | null>(null);
 
   // Load both lists for this zip.
   useEffect(() => {
@@ -191,9 +192,18 @@ export default function ServiceCenters({ zip }: { zip: string }) {
       count++;
     });
 
+    boundsRef.current = count > 0 ? bounds : null;
     if (count > 0) map.fitBounds(bounds, { padding: 60, maxZoom: 13, duration: 500 });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mapReady, data, tab, zip]);
+
+  // A map inside a hidden tab has no size; fix it when the tab is shown again.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!visible || !map || !mapReady) return;
+    map.resize();
+    if (boundsRef.current) map.fitBounds(boundsRef.current, { padding: 60, maxZoom: 13, duration: 0 });
+  }, [visible, mapReady]);
 
   function focusPlace(i: number) {
     const map = mapRef.current;
@@ -209,7 +219,7 @@ export default function ServiceCenters({ zip }: { zip: string }) {
   const error = errors[tab];
 
   return (
-    <div className="card" data-print-hide>
+    <div className="card">
       <h2>Nearby help</h2>
 
       <div className="tab-row" role="tablist">

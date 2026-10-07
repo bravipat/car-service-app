@@ -80,7 +80,7 @@ export default function VehicleSafety({
   const state = cache[tab];
 
   return (
-    <div className="card" data-print-hide>
+    <div className="card">
       <h2>
         Safety &amp; recall information — {year} {make} {model}
       </h2>
