@@ -160,7 +160,7 @@ export default function VehicleForm({
     <form onSubmit={handleSubmit}>
       {recent.length > 0 && (
         <div className="recent-row">
-          <span className="muted-note">Recent vehicles:</span>
+          <span className="recent-label">Recent</span>
           {recent.map((v, i) => (
             <button
               type="button"
@@ -174,41 +174,9 @@ export default function VehicleForm({
           ))}
         </div>
       )}
-      <div className="form-grid">
-        <div>
-          <label htmlFor="mileage">Current mileage</label>
-          <input
-            id="mileage"
-            type="number"
-            min={0}
-            placeholder="e.g. 42000"
-            value={mileage}
-            onChange={(e) => setMileage(e.target.value)}
-          />
-        </div>
-        <div>
-          <label htmlFor="lastServiceDate">Last service date</label>
-          <input
-            id="lastServiceDate"
-            type="date"
-            max={today || undefined}
-            value={lastServiceDate}
-            onChange={(e) => setLastServiceDate(e.target.value)}
-          />
-        </div>
-        <div>
-          <label htmlFor="zip">Zip code</label>
-          <input
-            id="zip"
-            type="text"
-            inputMode="numeric"
-            maxLength={5}
-            placeholder="e.g. 08540"
-            value={zip}
-            onChange={(e) => setZip(e.target.value.replace(/\D/g, ""))}
-          />
-        </div>
-        <div />
+      <fieldset className="field-group">
+        <legend>Vehicle</legend>
+        <div className="form-grid three">
         <div>
           <label htmlFor="make">Make</label>
           <select
@@ -256,7 +224,47 @@ export default function VehicleForm({
             ))}
           </select>
         </div>
-      </div>
+        </div>
+      </fieldset>
+
+      <fieldset className="field-group">
+        <legend>Service details</legend>
+        <div className="form-grid three">
+        <div>
+          <label htmlFor="mileage">Current mileage</label>
+          <input
+            id="mileage"
+            type="number"
+            min={0}
+            placeholder="e.g. 42000"
+            value={mileage}
+            onChange={(e) => setMileage(e.target.value)}
+          />
+        </div>
+        <div>
+          <label htmlFor="lastServiceDate">Last service date</label>
+          <input
+            id="lastServiceDate"
+            type="date"
+            max={today || undefined}
+            value={lastServiceDate}
+            onChange={(e) => setLastServiceDate(e.target.value)}
+          />
+        </div>
+        <div>
+          <label htmlFor="zip">Zip code</label>
+          <input
+            id="zip"
+            type="text"
+            inputMode="numeric"
+            maxLength={5}
+            placeholder="e.g. 08540"
+            value={zip}
+            onChange={(e) => setZip(e.target.value.replace(/\D/g, ""))}
+          />
+        </div>
+        </div>
+      </fieldset>
 
       {error && <div className="error-text">{error}</div>}
 

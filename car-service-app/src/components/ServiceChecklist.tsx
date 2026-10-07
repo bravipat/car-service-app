@@ -141,20 +141,22 @@ export default function ServiceChecklist({
         )}
         {schedule.map((entry, i) => (
           <div key={i} className={`schedule-item ${entry.status === "due" ? "due" : "upcoming"}`}>
-            <span className="badge">{entry.status === "due" ? "Due now" : "Coming up"}</span>
-            <div>
-              <strong>{entry.label}</strong>{" "}
-              <span className="muted-note">
-                {showMonths
-                  ? `${etaFor(entry)} (at ${entry.triggerMiles.toLocaleString("en-US")} mi)`
-                  : `(at ${entry.triggerMiles.toLocaleString("en-US")} mi)`}
-              </span>
+            <div className="milepost" aria-label={`${entry.triggerMiles.toLocaleString("en-US")} miles`}>
+              <span className="milepost-num">{entry.triggerMiles.toLocaleString("en-US")}</span>
+              <span className="milepost-unit">miles</span>
             </div>
-            <ul>
-              {entry.items.map((item, j) => (
-                <li key={j}>{item}</li>
-              ))}
-            </ul>
+            <div className="item-body">
+              <div className="item-title">
+                <strong>{entry.label}</strong>
+                <span className="status-pill">{entry.status === "due" ? "Due now" : "Coming up"}</span>
+              </div>
+              {showMonths && <div className="item-eta">{etaFor(entry)}</div>}
+              <ul>
+                {entry.items.map((item, j) => (
+                  <li key={j}>{item}</li>
+                ))}
+              </ul>
+            </div>
           </div>
         ))}
       </div>
