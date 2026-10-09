@@ -7,6 +7,9 @@ import ServiceChecklist from "@/components/ServiceChecklist";
 import ServiceCenters from "@/components/ServiceCenters";
 import VehicleSafety from "@/components/VehicleSafety";
 import AskQuestion from "@/components/AskQuestion";
+import Reveal from "@/components/Reveal";
+import CarArt from "@/components/CarArt";
+import ToastHost, { type Toast, type ToastKind } from "@/components/Toast";
 import type { ScheduleResult } from "@/lib/maintenanceSchedule";
 import {
   DEFAULT_PREFS,
@@ -51,6 +54,22 @@ export default function HomePage() {
   const [prefs, setPrefs] = useState<Prefs>(DEFAULT_PREFS);
   const formRef = useRef<HTMLDivElement | null>(null);
 
+  const [toasts, setToasts] = useState<Toast[]>([]);
+  const toastId = useRef(0);
+  function notify(kind: ToastKind, message: string) {
+    const id = ++toastId.current;
+    setToasts((t) => [...t.slice(-2), { id, kind, message }]);
+    setTimeout(() => setToasts((t) => t.filter((x) => x.id !== id)), kind === "error" ? 7000 : 4500);
+  }
+  function dismissToast(id: number) {
+    setToasts((t) => t.filter((x) => x.id !== id));
+  }
+
+  function startHere() {
+    document.getElementById("vehicle-form")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    setTimeout(() => document.getElementById("make")?.focus({ preventScroll: true }), 350);
+  }
+
   // Restore this browser's saved vehicle + prefs, then fetch recent
   // vehicles from the database for the same anonymous id.
   useEffect(() => {
@@ -90,6 +109,7 @@ export default function HomePage() {
 
       setResult(data);
       setVehicle(values);
+      notify("success", `Schedule ready for your ${vehicleLabel(values)}.`);
       setEditing(false);
       setTab("schedule");
       setVisited({ schedule: true }); // safety + nearby start fresh for the new vehicle
@@ -102,9 +122,15 @@ export default function HomePage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ clientId: getClientId(), ...values }),
-      }).catch(() => {});
+      })
+        .then((r) => {
+          if (!r.ok) throw new Error("save failed");
+        })
+        .catch(() => notify("error", "Couldn't save this search to your history. It's still saved on this device."));
     } catch (err: any) {
-      setError(err.message || "Something went wrong");
+      const msg = err?.message || "Something went wrong";
+      setError(msg);
+      notify("error", `Couldn't check your schedule: ${msg}`);
     } finally {
       setLoading(false);
     }
@@ -118,33 +144,47 @@ export default function HomePage() {
   const upcomingCount = result ? result.schedule.length - dueCount : 0;
 
   return (
-    <main className="container">
-      <div className="topbar">
-        <span className="mark" aria-hidden="true">
-          <i />
-        </span>
-        <span className="brand">Car Service Reminder</span>
-      </div>
+    <main className="container" id="top">
+      <header className="site-header">
+        <a className="site-brand" href="#top" aria-label="Car Service Reminder, back to top">
+          <span className="mark" aria-hidden="true">
+            <i />
+          </span>
+          <span className="brand">Car Service Reminder</span>
+        </a>
+        <nav className="site-nav" aria-label="Page">
+          <a href={hasVehicle && !editing ? "#vehicle-summary" : "#vehicle-form"}>Your car</a>
+          <a href="#ask">Ask a question</a>
+          {hasVehicle && <a href="#results">Results</a>}
+        </nav>
+      </header>
 
       {!hasVehicle && (
-        <header className="hero">
-          <div className="hero-grid">
-            <div>
-              <h1>What does your car need next?</h1>
-              <p>
-                Enter your car and mileage to see what maintenance is due, check safety ratings and recalls, and
-                find help nearby.
-              </p>
+        <Reveal>
+          <section className="hero" aria-labelledby="hero-title">
+            <div className="hero-grid">
+              <div>
+                <p className="eyebrow">Maintenance · Safety · Nearby help</p>
+                <h1 id="hero-title">Know what your car needs next</h1>
+                <p className="hero-sub">
+                  Enter your car and mileage to see what maintenance is due, check safety ratings and recalls, and
+                  find trusted help nearby.
+                </p>
+                <button type="button" className="btn cta" onClick={startHere}>
+                  Check my schedule
+                </button>
+              </div>
+              <div className="hero-odo">
+                <CarArt />
+                <Odometer value={0} caption="Your mileage goes here" />
+              </div>
             </div>
-            <div className="hero-odo">
-              <Odometer value={0} caption="Your mileage goes here" />
-            </div>
-          </div>
-        </header>
+          </section>
+        </Reveal>
       )}
 
       {showForm && (
-        <section className={`card form-card ${hasVehicle ? "" : "overlap"}`} ref={formRef}>
+        <section id="vehicle-form" className={`card form-card ${hasVehicle ? "" : "overlap"}`} ref={formRef}>
           <h2>{hasVehicle ? "Change vehicle" : "Your vehicle"}</h2>
           <VehicleForm
             onSubmit={handleSubmit}
@@ -161,11 +201,16 @@ export default function HomePage() {
               Cancel
             </button>
           )}
-          {error && <div className="error-text">{error}</div>}
+          {error && (
+            <div className="error-text" role="alert">
+              {error}
+            </div>
+          )}
         </section>
       )}
 
       {hasVehicle && !editing && vehicle && (
+        <Reveal id="vehicle-summary">
         <VehicleDash
           label={vehicleLabel(vehicle)}
           mileage={vehicle.mileage}
@@ -178,11 +223,15 @@ export default function HomePage() {
             setTimeout(() => formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 0);
           }}
         />
+        </Reveal>
       )}
 
-      <AskQuestion />
+      <Reveal id="ask">
+        <AskQuestion />
+      </Reveal>
 
       {hasVehicle && vehicle && result && (
+        <Reveal id="results">
         <div className="sheet">
           <nav className="tab-nav" role="tablist" aria-label="Sections">
             {TABS.map((t) => (
@@ -225,7 +274,10 @@ export default function HomePage() {
             {visited.nearby && <ServiceCenters key={vehicleKey} zip={vehicle.zip} visible={tab === "nearby"} />}
           </section>
         </div>
+        </Reveal>
       )}
+
+      <ToastHost toasts={toasts} onDismiss={dismissToast} />
     </main>
   );
 }

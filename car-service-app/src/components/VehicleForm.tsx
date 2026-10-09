@@ -8,6 +8,17 @@ type Option = { id: number; name: string };
 
 export type VehicleFormValues = SavedVehicle;
 
+type Field = "make" | "model" | "year" | "mileage" | "date" | "zip";
+const FIELD_ORDER: Field[] = ["make", "model", "year", "mileage", "date", "zip"];
+const FIELD_ID: Record<Field, string> = {
+  make: "make",
+  model: "model",
+  year: "year",
+  mileage: "mileage",
+  date: "lastServiceDate",
+  zip: "zip",
+};
+
 export default function VehicleForm({
   onSubmit,
   loading,
@@ -33,6 +44,7 @@ export default function VehicleForm({
   const [year, setYear] = useState("");
 
   const [error, setError] = useState<string | null>(null);
+  const [errors, setErrors] = useState<Partial<Record<Field, string>>>({});
 
   useEffect(() => {
     fetch("/api/makes")
@@ -59,6 +71,61 @@ export default function VehicleForm({
   async function loadYears(id: string): Promise<number[]> {
     const r = await fetch(`/api/years?modelId=${id}`);
     return r.ok ? r.json() : [];
+  }
+
+  function valueOf(f: Field): string {
+    return { make: makeId, model: modelId, year, mileage, date: lastServiceDate, zip }[f];
+  }
+
+  function check(f: Field, v: string): string {
+    switch (f) {
+      case "make":
+        return v ? "" : "Select your vehicle's make.";
+      case "model":
+        return v ? "" : "Select your vehicle's model.";
+      case "year":
+        return v ? "" : "Select the model year.";
+      case "mileage": {
+        if (v.trim() === "") return "Enter your current mileage.";
+        const n = Number(v);
+        if (!Number.isFinite(n) || n < 0) return "Mileage can't be negative.";
+        if (!Number.isInteger(n)) return "Use a whole number, like 42000.";
+        if (n > 1_000_000) return "That mileage looks too high — please check it.";
+        return "";
+      }
+      case "date":
+        if (!v) return "Enter the date of your last service.";
+        if (today && v > today) return "Last service date can't be in the future.";
+        if (v < "1980-01-01") return "Enter a date after 1980.";
+        return "";
+      case "zip":
+        return /^\d{5}$/.test(v) ? "" : "Enter a 5-digit zip code.";
+    }
+  }
+
+  // Validate when the visitor leaves a field, and re-check live once it has an error.
+  function validateField(f: Field, v: string = valueOf(f)) {
+    setErrors((e) => ({ ...e, [f]: check(f, v) }));
+  }
+  function liveCheck(f: Field, v: string) {
+    if (errors[f]) validateField(f, v);
+  }
+  function fieldProps(f: Field) {
+    const id = FIELD_ID[f];
+    return {
+      id,
+      "aria-invalid": errors[f] ? true : undefined,
+      "aria-describedby": errors[f] ? `${id}-err` : undefined,
+      className: errors[f] ? "invalid" : undefined,
+      onBlur: () => validateField(f),
+    };
+  }
+  function fieldError(f: Field) {
+    return errors[f] ? (
+      <p className="field-error" id={`${FIELD_ID[f]}-err`} role="alert">
+        {errors[f]}
+      </p>
+    ) : null;
   }
 
   // Cascading dropdowns are driven by the user's changes (not effects), so
@@ -91,6 +158,7 @@ export default function VehicleForm({
 
   async function applySaved(v: SavedVehicle) {
     setError(null);
+    setErrors({});
     setMileage(String(v.mileage));
     setLastServiceDate(v.lastServiceDate);
     setZip(v.zip);
@@ -119,23 +187,24 @@ export default function VehicleForm({
     e.preventDefault();
     setError(null);
 
+    const found: Partial<Record<Field, string>> = {};
+    for (const f of FIELD_ORDER) {
+      const msg = check(f, valueOf(f));
+      if (msg) found[f] = msg;
+    }
+    setErrors(found);
+    const firstBad = FIELD_ORDER.find((f) => {
+      if (!found[f]) return false;
+      const el = document.getElementById(FIELD_ID[f]) as HTMLInputElement | HTMLSelectElement | null;
+      return !!el && !el.disabled;
+    });
+    if (firstBad) {
+      document.getElementById(FIELD_ID[firstBad])?.focus();
+      return;
+    }
+    if (Object.keys(found).length) return;
+
     const mileageNum = Number(mileage);
-    if (!mileage || !Number.isFinite(mileageNum) || mileageNum < 0) {
-      setError("Enter a valid current mileage.");
-      return;
-    }
-    if (!lastServiceDate) {
-      setError("Enter the date of your last service.");
-      return;
-    }
-    if (!/^\d{5}$/.test(zip)) {
-      setError("Enter a valid 5-digit zip code.");
-      return;
-    }
-    if (!makeId || !modelId || !year) {
-      setError("Select your vehicle's make, model, and year.");
-      return;
-    }
 
     const makeName = makes.find((m) => String(m.id) === makeId)?.name;
     const modelName = models.find((m) => String(m.id) === modelId)?.name;
@@ -157,7 +226,7 @@ export default function VehicleForm({
   }
 
   return (
-    <form onSubmit={handleSubmit}>
+    <form onSubmit={handleSubmit} noValidate>
       {recent.length > 0 && (
         <div className="recent-row">
           <span className="recent-label">Recent</span>
@@ -180,9 +249,12 @@ export default function VehicleForm({
         <div>
           <label htmlFor="make">Make</label>
           <select
-            id="make"
+            {...fieldProps("make")}
             value={makeId}
-            onChange={(e) => handleMakeChange(e.target.value)}
+            onChange={(e) => {
+              handleMakeChange(e.target.value);
+              liveCheck("make", e.target.value);
+            }}
           >
             <option value="">Select make…</option>
             {makes.map((m) => (
@@ -191,13 +263,17 @@ export default function VehicleForm({
               </option>
             ))}
           </select>
+          {fieldError("make")}
         </div>
         <div>
           <label htmlFor="model">Model</label>
           <select
-            id="model"
+            {...fieldProps("model")}
             value={modelId}
-            onChange={(e) => handleModelChange(e.target.value)}
+            onChange={(e) => {
+              handleModelChange(e.target.value);
+              liveCheck("model", e.target.value);
+            }}
             disabled={!makeId}
           >
             <option value="">Select model…</option>
@@ -207,13 +283,17 @@ export default function VehicleForm({
               </option>
             ))}
           </select>
+          {fieldError("model")}
         </div>
         <div>
           <label htmlFor="year">Year</label>
           <select
-            id="year"
+            {...fieldProps("year")}
             value={year}
-            onChange={(e) => setYear(e.target.value)}
+            onChange={(e) => {
+              setYear(e.target.value);
+              liveCheck("year", e.target.value);
+            }}
             disabled={!modelId}
           >
             <option value="">Select year…</option>
@@ -223,6 +303,7 @@ export default function VehicleForm({
               </option>
             ))}
           </select>
+          {fieldError("year")}
         </div>
         </div>
       </fieldset>
@@ -233,35 +314,49 @@ export default function VehicleForm({
         <div>
           <label htmlFor="mileage">Current mileage</label>
           <input
-            id="mileage"
+            {...fieldProps("mileage")}
             type="number"
             min={0}
+            inputMode="numeric"
             placeholder="e.g. 42000"
             value={mileage}
-            onChange={(e) => setMileage(e.target.value)}
+            onChange={(e) => {
+              setMileage(e.target.value);
+              liveCheck("mileage", e.target.value);
+            }}
           />
+          {fieldError("mileage")}
         </div>
         <div>
           <label htmlFor="lastServiceDate">Last service date</label>
           <input
-            id="lastServiceDate"
+            {...fieldProps("date")}
             type="date"
             max={today || undefined}
             value={lastServiceDate}
-            onChange={(e) => setLastServiceDate(e.target.value)}
+            onChange={(e) => {
+              setLastServiceDate(e.target.value);
+              liveCheck("date", e.target.value);
+            }}
           />
+          {fieldError("date")}
         </div>
         <div>
           <label htmlFor="zip">Zip code</label>
           <input
-            id="zip"
+            {...fieldProps("zip")}
             type="text"
             inputMode="numeric"
             maxLength={5}
             placeholder="e.g. 08540"
             value={zip}
-            onChange={(e) => setZip(e.target.value.replace(/\D/g, ""))}
+            onChange={(e) => {
+              const v = e.target.value.replace(/\D/g, "");
+              setZip(v);
+              liveCheck("zip", v);
+            }}
           />
+          {fieldError("zip")}
         </div>
         </div>
       </fieldset>
@@ -269,7 +364,8 @@ export default function VehicleForm({
       {error && <div className="error-text">{error}</div>}
 
       <div className="submit-row">
-        <button type="submit" disabled={loading}>
+        <button type="submit" className="btn primary" disabled={loading} aria-busy={loading}>
+          {loading && <span className="spinner" aria-hidden="true" />}
           {loading ? "Checking…" : "Check my maintenance schedule"}
         </button>
         {saved && (
@@ -286,6 +382,7 @@ export default function VehicleForm({
               setYear("");
               setModels([]);
               setYears([]);
+              setErrors({});
             }}
           >
             Forget saved vehicle

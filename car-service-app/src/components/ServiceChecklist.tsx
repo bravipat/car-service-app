@@ -3,6 +3,7 @@
 import { useState } from "react";
 import type { ScheduleResult } from "@/lib/maintenanceSchedule";
 import type { Prefs } from "@/lib/storage";
+import ServiceIcon from "./ServiceIcon";
 import { monthsUntil, formatEta, intervalComparison } from "@/lib/vehicle";
 
 export default function ServiceChecklist({
@@ -147,6 +148,7 @@ export default function ServiceChecklist({
             </div>
             <div className="item-body">
               <div className="item-title">
+                <ServiceIcon text={`${entry.label} ${entry.items.join(" ")}`} />
                 <strong>{entry.label}</strong>
                 <span className="status-pill">{entry.status === "due" ? "Due now" : "Coming up"}</span>
               </div>
