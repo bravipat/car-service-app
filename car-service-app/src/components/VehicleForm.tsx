@@ -24,12 +24,14 @@ export default function VehicleForm({
   loading,
   saved,
   recent,
+  onDeleteRecent,
   onClearSaved,
 }: {
   onSubmit: (values: VehicleFormValues) => void;
   loading: boolean;
   saved: SavedVehicle | null;
   recent: SavedVehicle[];
+  onDeleteRecent: (v?: SavedVehicle) => void;
   onClearSaved: () => void;
 }) {
   const [makes, setMakes] = useState<Option[]>([]);
@@ -44,6 +46,7 @@ export default function VehicleForm({
   const [year, setYear] = useState("");
 
   const [error, setError] = useState<string | null>(null);
+  const [confirmClear, setConfirmClear] = useState(false);
   const [errors, setErrors] = useState<Partial<Record<Field, string>>>({});
 
   useEffect(() => {
@@ -230,17 +233,49 @@ export default function VehicleForm({
       {recent.length > 0 && (
         <div className="recent-row">
           <span className="recent-label">Recent</span>
-          {recent.map((v, i) => (
-            <button
-              type="button"
-              key={i}
-              className="chip"
-              onClick={() => applySaved(v)}
-              title={`${v.mileage.toLocaleString("en-US")} mi · zip ${v.zip}`}
-            >
-              {vehicleLabel(v)}
-            </button>
+          {recent.map((v) => (
+            <span className="chip-wrap" key={`${v.makeId}-${v.modelId}-${v.year}`}>
+              <button
+                type="button"
+                className="chip"
+                onClick={() => applySaved(v)}
+                title={`${v.mileage.toLocaleString("en-US")} mi · zip ${v.zip}`}
+              >
+                {vehicleLabel(v)}
+              </button>
+              <button
+                type="button"
+                className="chip-x"
+                aria-label={`Remove ${vehicleLabel(v)} from recent searches`}
+                title="Remove"
+                onClick={() => onDeleteRecent(v)}
+              >
+                ×
+              </button>
+            </span>
           ))}
+          {confirmClear ? (
+            <span className="confirm-clear" role="group" aria-label="Confirm clearing recent searches">
+              Clear all?
+              <button
+                type="button"
+                className="link-btn danger"
+                onClick={() => {
+                  setConfirmClear(false);
+                  onDeleteRecent();
+                }}
+              >
+                Yes, clear
+              </button>
+              <button type="button" className="link-btn" onClick={() => setConfirmClear(false)}>
+                Keep
+              </button>
+            </span>
+          ) : (
+            <button type="button" className="link-btn" onClick={() => setConfirmClear(true)}>
+              Clear all
+            </button>
+          )}
         </div>
       )}
       <fieldset className="field-group">

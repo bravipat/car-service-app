@@ -72,14 +72,43 @@ export default function HomePage() {
 
   // Restore this browser's saved vehicle + prefs, then fetch recent
   // vehicles from the database for the same anonymous id.
-  useEffect(() => {
-    setSaved(loadVehicle());
-    setPrefs(loadPrefs());
-    fetch(`/api/searches?clientId=${getClientId()}`)
+  function refreshRecent() {
+    return fetch(`/api/searches?clientId=${getClientId()}`)
       .then((r) => (r.ok ? r.json() : { vehicles: [] }))
       .then((d) => setRecent((d.vehicles || []).filter(isSavedVehicle)))
       .catch(() => {});
+  }
+
+  useEffect(() => {
+    setSaved(loadVehicle());
+    setPrefs(loadPrefs());
+    refreshRecent();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Delete one recent vehicle, or all of them when no vehicle is given.
+  async function deleteRecent(v?: SavedVehicle) {
+    const params = new URLSearchParams({ clientId: getClientId() });
+    if (v) {
+      params.set("makeId", String(v.makeId));
+      params.set("modelId", String(v.modelId));
+      params.set("year", String(v.year));
+    }
+    try {
+      const res = await fetch(`/api/searches?${params}`, { method: "DELETE" });
+      if (!res.ok) throw new Error("delete failed");
+      // Also forget the on-device copy if it is one of the vehicles just removed.
+      const s = loadVehicle();
+      if (s && (!v || (s.makeId === v.makeId && s.modelId === v.modelId && s.year === v.year))) {
+        clearVehicle();
+        setSaved(null);
+      }
+      await refreshRecent();
+      notify("success", v ? `Removed ${vehicleLabel(v)} from your recent searches.` : "Cleared your recent searches.");
+    } catch {
+      notify("error", "Couldn't delete that. Please try again.");
+    }
+  }
 
   function updatePrefs(p: Prefs) {
     setPrefs(p);
@@ -191,6 +220,7 @@ export default function HomePage() {
             loading={loading}
             saved={saved}
             recent={recent}
+            onDeleteRecent={deleteRecent}
             onClearSaved={() => {
               clearVehicle();
               setSaved(null);

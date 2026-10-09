@@ -77,3 +77,36 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Could not load saved vehicles" }, { status: 500 });
   }
 }
+
+// Delete saved searches for this browser id: one vehicle (makeId + modelId + year),
+// or every search when only clientId is given.
+export async function DELETE(req: NextRequest) {
+  const q = req.nextUrl.searchParams;
+  const clientId = q.get("clientId") || "";
+  if (!UUID_RE.test(clientId)) {
+    return NextResponse.json({ error: "clientId required" }, { status: 400 });
+  }
+
+  const hasVehicle = q.has("makeId") || q.has("modelId") || q.has("year");
+  const makeId = Number(q.get("makeId"));
+  const modelId = Number(q.get("modelId"));
+  const year = Number(q.get("year"));
+  if (hasVehicle && !(q.has("makeId") && q.has("modelId") && q.has("year") && isInt(makeId) && isInt(modelId) && isInt(year))) {
+    return NextResponse.json({ error: "makeId, modelId and year must all be whole numbers" }, { status: 400 });
+  }
+
+  try {
+    await ensureSchema();
+    const res = hasVehicle
+      ? await getPool().query(
+          `DELETE FROM vehicle_searches
+           WHERE client_id = $1 AND make_id = $2 AND model_id = $3 AND model_year = $4`,
+          [clientId, makeId, modelId, year]
+        )
+      : await getPool().query(`DELETE FROM vehicle_searches WHERE client_id = $1`, [clientId]);
+    return NextResponse.json({ ok: true, deleted: res.rowCount ?? 0 });
+  } catch (err) {
+    console.error("DELETE /api/searches failed:", err);
+    return NextResponse.json({ error: "Could not delete searches" }, { status: 500 });
+  }
+}

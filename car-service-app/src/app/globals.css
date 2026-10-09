@@ -768,6 +768,51 @@ button.secondary:hover:not(:disabled),
   margin-right: 2px;
 }
 
+.chip-wrap {
+  display: inline-flex;
+  align-items: stretch;
+}
+
+.chip-wrap .chip {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+  border-right: none;
+}
+
+.chip-x {
+  padding: 0 9px;
+  border: 1px solid var(--border);
+  border-radius: 0 999px 999px 0;
+  background: var(--chip);
+  color: var(--muted);
+  font-size: 1.05rem;
+  line-height: 1;
+}
+
+.chip-x:hover:not(:disabled) {
+  background: var(--due-bg);
+  border-color: var(--due-line);
+  color: var(--due);
+}
+
+.confirm-clear {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+
+.link-btn.danger {
+  color: var(--due);
+  font-weight: 600;
+}
+
+.recent-row .link-btn {
+  margin-left: 4px;
+  padding: 6px 4px;
+}
+
 .chip {
   border-radius: 999px;
   padding: 6px 13px;
