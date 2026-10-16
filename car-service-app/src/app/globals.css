@@ -317,67 +317,127 @@ h3 {
   width: 100%;
 }
 
-.car-art {
+.car-fig {
+  --open: 0.16;
+  margin: 0;
   width: 100%;
   max-width: 400px;
+}
+
+.car-stage {
+  border-radius: 12px;
+  cursor: crosshair;
+  touch-action: pan-y;
+  outline-offset: 4px;
+}
+
+.car-art {
+  display: block;
+  width: 100%;
   height: auto;
   overflow: visible;
 }
 
-.car-art .road {
-  stroke: rgba(var(--glow-rgb), 0.35);
-  stroke-width: 2;
-  stroke-dasharray: 14 12;
-  stroke-linecap: round;
+.car-art * {
+  vector-effect: non-scaling-stroke;
 }
 
-.car-art .body {
-  fill: rgba(var(--glow-rgb), 0.1);
-  stroke: var(--glow);
-  stroke-width: 3;
-  stroke-linejoin: round;
+.car-art .layer {
+  transition: transform 0.38s var(--ease);
 }
 
 .car-art .glass {
-  fill: rgba(var(--glow-rgb), 0.22);
+  transform: translateY(calc(var(--open) * -36px));
+}
+
+.car-art .body {
+  transform: translateY(calc(var(--open) * -8px));
+}
+
+.car-art .wheels {
+  transform: translateY(calc(var(--open) * 22px));
+}
+
+/* hairline strokes: receding layers are dim, the picked layer is lit */
+.car-art path,
+.car-art circle,
+.car-art line,
+.car-art rect {
+  fill: none;
+  stroke: rgba(var(--glow-rgb), 0.55);
+  stroke-width: 1.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: stroke 0.25s var(--ease), stroke-width 0.25s var(--ease), fill 0.25s var(--ease);
+}
+
+.car-art .layer.on path,
+.car-art .layer.on circle,
+.car-art .layer.on line,
+.car-art .layer.on rect {
   stroke: var(--glow);
   stroke-width: 2;
-  stroke-linejoin: round;
+}
+
+.car-art .road {
+  stroke-dasharray: 5 7;
+  stroke: rgba(var(--glow-rgb), 0.3);
+}
+
+.car-art .shell {
+  fill: var(--asphalt);
+}
+
+.car-art .tyre {
+  fill: var(--asphalt);
+}
+
+.car-art .pane {
+  fill: rgba(var(--glow-rgb), 0.07);
+}
+
+.car-art .layer.on .pane {
+  fill: rgba(var(--glow-rgb), 0.16);
 }
 
 .car-art .detail,
 .car-art .spokes {
-  fill: none;
-  stroke: rgba(var(--glow-rgb), 0.7);
-  stroke-width: 2;
-  stroke-linecap: round;
+  stroke: rgba(var(--glow-rgb), 0.4);
 }
 
 .car-art .head {
-  fill: #fff6c9;
-  filter: drop-shadow(0 0 6px rgba(255, 246, 201, 0.9));
+  stroke: #fff6c9;
+  fill: rgba(255, 246, 201, 0.5);
 }
 
 .car-art .tail {
-  fill: #ff7b7b;
-}
-
-.car-art .tyre {
-  fill: #04100f;
-  stroke: var(--glow);
-  stroke-width: 3;
-}
-
-.car-art .hub {
-  fill: var(--asphalt2);
-  stroke: var(--glow);
-  stroke-width: 2;
+  stroke: #ff9a9a;
+  fill: rgba(255, 123, 123, 0.5);
 }
 
 .car-art .wheel-spin {
   transform-box: fill-box;
   transform-origin: center;
-  animation: spin 8s linear infinite;
+  animation: spin 14s linear infinite;
+}
+
+.car-cap {
+  margin-top: 8px;
+  min-height: 2.6em;
+  color: #a5bcc0;
+  font-size: 0.78rem;
+  line-height: 1.4;
+}
+
+.car-cap b {
+  display: inline-block;
+  margin-right: 6px;
+  color: var(--glow);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
 }
 
 .hero h1,
@@ -388,6 +448,7 @@ h3 {
 .eyebrow {
   margin: 0 0 12px;
   color: var(--glow);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   font-size: 0.74rem;
   font-weight: 700;
   letter-spacing: 0.12em;
@@ -534,6 +595,117 @@ h3 {
   height: 100%;
   background: linear-gradient(90deg, var(--ok), var(--amber));
   border-radius: 99px;
+}
+
+
+/* ------------------------------------------------------------------
+   Hairline-style details: mono labels, italic emphasis, thin rules
+------------------------------------------------------------------- */
+.hero h1 em {
+  font-style: italic;
+  font-weight: 500;
+  color: var(--glow);
+}
+
+.hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px 22px;
+}
+
+.hero-link {
+  color: #cfe9e5;
+  font-size: 0.95rem;
+  font-weight: 500;
+  text-decoration: underline;
+  text-decoration-color: rgba(var(--glow-rgb), 0.5);
+  text-underline-offset: 4px;
+  transition: color 0.18s var(--ease), text-decoration-color 0.18s var(--ease);
+}
+
+.hero-link:hover {
+  color: #fff;
+  text-decoration-color: var(--glow);
+}
+
+.tag-pill {
+  display: inline-block;
+  padding: 2px 8px;
+  border: 1px solid var(--tint-line);
+  border-radius: 999px;
+  background: var(--tint);
+  color: var(--link);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: lowercase;
+  white-space: nowrap;
+}
+
+.ask-note {
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+/* ------------------------------------------------------------------
+   Footer + disclaimer
+------------------------------------------------------------------- */
+.site-footer {
+  margin-top: 56px;
+  padding-top: 28px;
+  border-top: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 0.84rem;
+}
+
+.disclaimer {
+  max-width: 78ch;
+}
+
+.disclaimer p {
+  margin: 0 0 10px;
+}
+
+.disclaimer-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--heading);
+  font-family: var(--font-num);
+  font-weight: 600;
+}
+
+.disclaimer ul {
+  margin: 0 0 10px;
+  padding-left: 20px;
+}
+
+.disclaimer li {
+  margin-bottom: 4px;
+}
+
+.site-footer a {
+  color: var(--link);
+}
+
+.footer-line {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 10px 24px;
+  margin-top: 22px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+  font-size: 0.8rem;
+}
+
+.footer-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 18px;
 }
 
 /* ------------------------------------------------------------------
@@ -1442,6 +1614,10 @@ button.secondary:hover:not(:disabled),
     transition: none;
   }
 
+  .car-art .layer {
+    transition: none;
+  }
+
   .wheel-spin,
   .toast {
     animation: none !important;
@@ -1476,7 +1652,8 @@ button.secondary:hover:not(:disabled),
     padding: 10px 14px;
   }
 
-  .brand {
+  .brand,
+  .site-brand .tag-pill {
     display: none;
   }
 
@@ -1514,7 +1691,7 @@ button.secondary:hover:not(:disabled),
     align-items: flex-start;
   }
 
-  .car-art {
+  .car-fig {
     max-width: 320px;
   }
 
@@ -1621,6 +1798,7 @@ button.secondary:hover:not(:disabled),
 
   .no-print,
   body.print-schedule .site-header,
+  body.print-schedule .site-footer,
   body.print-schedule .hero,
   body.print-schedule .dash,
   body.print-schedule .ask,

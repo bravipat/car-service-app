@@ -6,6 +6,7 @@ import "./globals.css";
 const display = Poppins({
   subsets: ["latin"],
   weight: ["500", "600", "700"],
+  style: ["normal", "italic"],
   variable: "--font-display",
   display: "swap",
 });

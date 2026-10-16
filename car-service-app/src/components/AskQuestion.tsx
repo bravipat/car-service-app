@@ -92,6 +92,8 @@ export default function AskQuestion() {
         </button>
       </form>
 
+      <p className="ask-note">AI-generated answers can be wrong. Verify anything safety-critical.</p>
+
       {messages.length === 0 && (
         <div className="chips">
           {EXAMPLES.map((q) => (

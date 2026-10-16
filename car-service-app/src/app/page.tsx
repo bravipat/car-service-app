@@ -9,6 +9,7 @@ import VehicleSafety from "@/components/VehicleSafety";
 import AskQuestion from "@/components/AskQuestion";
 import Reveal from "@/components/Reveal";
 import CarArt from "@/components/CarArt";
+import SiteFooter from "@/components/SiteFooter";
 import ToastHost, { type Toast, type ToastKind } from "@/components/Toast";
 import type { ScheduleResult } from "@/lib/maintenanceSchedule";
 import {
@@ -180,11 +181,13 @@ export default function HomePage() {
             <i />
           </span>
           <span className="brand">Car Service Reminder</span>
+          <span className="tag-pill" title="A personal project built for learning">hobby project</span>
         </a>
         <nav className="site-nav" aria-label="Page">
           <a href={hasVehicle && !editing ? "#vehicle-summary" : "#vehicle-form"}>Your car</a>
           <a href="#ask">Ask a question</a>
           {hasVehicle && <a href="#results">Results</a>}
+          <a href="#about">About</a>
         </nav>
       </header>
 
@@ -194,14 +197,21 @@ export default function HomePage() {
             <div className="hero-grid">
               <div>
                 <p className="eyebrow">Maintenance · Safety · Nearby help</p>
-                <h1 id="hero-title">Know what your car needs next</h1>
+                <h1 id="hero-title">
+                  Know what your car <em>needs</em> next
+                </h1>
                 <p className="hero-sub">
                   Enter your car and mileage to see what maintenance is due, check safety ratings and recalls, and
                   find trusted help nearby.
                 </p>
-                <button type="button" className="btn cta" onClick={startHere}>
-                  Check my schedule
-                </button>
+                <div className="hero-actions">
+                  <button type="button" className="btn cta" onClick={startHere}>
+                    Check my schedule
+                  </button>
+                  <a className="hero-link" href="#ask">
+                    Or ask a question first
+                  </a>
+                </div>
               </div>
               <div className="hero-odo">
                 <CarArt />
@@ -306,6 +316,8 @@ export default function HomePage() {
         </div>
         </Reveal>
       )}
+
+      <SiteFooter />
 
       <ToastHost toasts={toasts} onDismiss={dismissToast} />
     </main>
